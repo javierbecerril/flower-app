@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌸 Pixel Flower for Us 🌸</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Firebase (replace version if needed) -->
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.0/firebase-database.js"></script>
+
+  <!-- PWA manifest & minimal service‑worker so Safari allows Add‑to‑Home‑Screen → standalone feel  -->
+  <link rel="manifest" href="data:application/manifest+json,{\"name\":\"Pixel Flower\",\"short_name\":\"Flower\",\"display\":\"standalone\",\"icons\":[{\"src\":\"https://twemoji.maxcdn.com/v/latest/72x72/1f33c.png\",\"sizes\":\"192x192\",\"type\":\"image/png\"}]}" />
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('data:application/javascript;base64,CgppbXBvcnQgc2VsZiBmcm9tICd0b3VjaGFnZSc7Cgppbm51bGxhQW1tLmxpc3RlbiA9ICgpID0+IHsKICBzZWxmLmNsaWVudHMudGhlbihjbGllbnQgPT4gewogICAgY2xpZW50LnBvc3RNZXNzYWdlKHsnYWN0aW9uJzogJ1dJQ0snfSk7CiAgfSk7Cn0K')
+      })
+    }
+  </script>
+  <style>
+    /* Ensure pixelated rendering on all browsers */
+    .pixel {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges; /* Safari */
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center bg-pink-100 text-gray-800 p-4 select-none">
+  <div class="max-w-sm w-full bg-white rounded-2xl shadow-xl p-8 space-y-10">
+    <!-- 🌼 Pixelated Flower -->
+    <div id="flower" class="flex justify-center">
+      <!-- Replace flower.png with any pixel art 128×128 image you like -->
+      <img src="flower.png" alt="pixel flower" class="w-32 h-32 pixel hover:rotate-6 transition-transform duration-300" />
+    </div>
+
+    <!-- Compliment Section (shared via Firebase) -->
+    <div class="space-y-4 text-center" id="complimentSection">
+      <h2 class="text-xl font-semibold">💬 Latest Compliment 💬</h2>
+      <p id="complimentReceived" class="text-lg italic min-h-[3rem]"></p>
+      <div class="flex items-center gap-2">
+        <input id="complimentInput" type="text" placeholder="Write a sweet note…" class="flex-grow border rounded px-3 py-1" />
+        <button id="sendCompliment" class="bg-pink-500 hover:bg-pink-600 text-white px-3 py-1 rounded-xl shadow">Send</button>
+      </div>
+    </div>
+
+    <!-- Countdown -->
+    <div class="text-center space-y-2">
+      <h2 class="text-xl font-semibold">⏳ Countdown Until I’m Back ⏳</h2>
+      <p id="countdown" class="text-lg font-medium"></p>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- 1. CONFIG (edit below) ----------------- */
+    // Hard‑coded reunion date (YYYY‑MM‑DD)
+    const TARGET_DATE = '2025-08-15'; // ← change this once!
+
+    // Firebase – replace with your own project settings!
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_DOMAIN.firebaseapp.com",
+      databaseURL: "https://YOUR_DOMAIN-default-rtdb.firebaseio.com/",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "SENDER_ID",
+      appId: "APP_ID"
+    };
+
+    /* ---------- 2. Firebase Init ----------------- */
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const complimentsRef = db.ref('compliments');
+
+    // Show last compliment available
+    complimentsRef.limitToLast(1).on('child_added', snap => {
+      document.getElementById('complimentReceived').innerText = snap.val().text;
+    });
+
+    // Send compliment
+    document.getElementById('sendCompliment').addEventListener('click', () => {
+      const input = document.getElementById('complimentInput');
+      const text = input.value.trim();
+      if (!text) return;
+      complimentsRef.push({ text, ts: Date.now() });
+      input.value = '';
+    });
+
+    /* ---------- 3. Countdown Logic ----------------- */
+    function updateCountdown() {
+      const diffMs = new Date(TARGET_DATE) - new Date();
+      const el = document.getElementById('countdown');
+      if (diffMs <= 0) {
+        el.innerText = "Welcome back! 🎉";
+        return;
+      }
+      const days = Math.ceil(diffMs / 86400000);
+      el.innerText = `${days} day${days !== 1 ? 's' : ''} to go 💖`;
+    }
+    updateCountdown();
+    setInterval(updateCountdown, 60000);
+
+    /* ---------- 4. Styling helper (slow bounce) ----- */
+    tailwind.config = { theme: { extend: { animation: { 'bounce-slow': 'bounce 4s infinite' } } } };
+  </script>
+</body>
+</html>
